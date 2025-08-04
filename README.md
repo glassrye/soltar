@@ -136,6 +136,22 @@ cd client-linux
 go build -o soltar-client main.go
 ```
 
+#### Cross-Platform macOS Client Building
+
+**Note:** The macOS client uses macOS-specific frameworks (`Network`, `Security`) and cannot be built on Linux. The macOS client must be built on a macOS system.
+
+**On macOS:**
+```bash
+cd client
+swift build -c release
+# Binary will be available at: .build/release/soltar-vpn
+```
+
+**Prerequisites for macOS Client:**
+- macOS system with Swift 5.9+
+- macOS 13+ target platform
+- Network and Security frameworks (included with macOS)
+
 ## Development
 
 ### Testing

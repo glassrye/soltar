@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: '5.9'
+        
+    - name: Build and test
+      run: |
+        swift build
+        swift test
+        
+    - name: Build release binaries
+      run: |
+        # Build Intel version
+        swift build -c release --triple x86_64-apple-macosx
+        cp .build/release/soltar-vpn soltar-vpn-x86_64
+        
+        # Build Apple Silicon version
+        swift build -c release --triple arm64-apple-macosx
+        cp .build/release/soltar-vpn soltar-vpn-arm64
+        
+        # Create universal binary
+        lipo -create soltar-vpn-x86_64 soltar-vpn-arm64 -output soltar-vpn-universal
+        
+        # Create checksums
+        shasum -a 256 soltar-vpn-universal > soltar-vpn-universal.sha256
+        shasum -a 256 soltar-vpn-x86_64 > soltar-vpn-x86_64.sha256
+        shasum -a 256 soltar-vpn-arm64 > soltar-vpn-arm64.sha256
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          soltar-vpn-universal
+          soltar-vpn-x86_64
+          soltar-vpn-arm64
+          soltar-vpn-universal.sha256
+          soltar-vpn-x86_64.sha256
+          soltar-vpn-arm64.sha256
+        body: |
+          ## Soltar VPN Client ${{ github.ref_name }}
+          
+          ### Downloads
+          
+          - **Universal Binary** (Intel + Apple Silicon): `soltar-vpn-universal`
+          - **Intel Binary**: `soltar-vpn-x86_64`
+          - **Apple Silicon Binary**: `soltar-vpn-arm64`
+          
+          ### Installation
+          
+          ```bash
+          # Download and install
+          curl -L -o soltar-vpn https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/soltar-vpn-universal
+          chmod +x soltar-vpn
+          sudo mv soltar-vpn /usr/local/bin/
+          ```
+          
+          ### Verification
+          
+          ```bash
+          # Verify checksums
+          shasum -c soltar-vpn-universal.sha256
+          ```
+          
+          ### Features
+          
+          - Email-based OTP authentication
+          - Environment-aware VPN connections
+          - Infrastructure tracking support
+          - Native macOS Swift application
+          
+          ### System Requirements
+          
+          - macOS 13.0 or later
+          - Intel or Apple Silicon Mac
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

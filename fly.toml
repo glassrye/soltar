@@ -1,0 +1,40 @@
+# fly.toml app configuration file generated for soltar-vpn on 2025-07-31T08:52:43-07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'soltar-vpn'
+primary_region = 'iad'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  JWT_SECRET = 'your-secret-key-change-in-production'
+  REDIS_URL = 'redis://localhost:6379'
+  PORT = '8080'
+  REGION = 'iad'
+
+[[mounts]]
+  source = 'soltar_redis'
+  destination = '/data'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
